@@ -23,12 +23,11 @@
       width: min(1280px, 96vw);
       height: min(800px, 92vh);
       background: #050505;
-      border-radius: 22px;
+      border-radius: 20px;
       overflow: hidden;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.06),
-        0 25px 60px rgba(0, 0, 0, 0.85),
-        0 0 100px rgba(0, 0, 0, 0.5);
+        0 20px 50px rgba(0, 0, 0, 0.85);
     }
 
     #video, #canvas {
@@ -38,137 +37,177 @@
       object-fit: cover;
     }
 
-    #video {
-      transform: scaleX(-1);
-    }
+    #video { transform: scaleX(-1); }
+    #canvas { pointer-events: none; }
 
-    #canvas {
-      pointer-events: none;
-    }
-
-    /* ========== Shared Glassmorphism Base ========== */
+    /* ========== Glassmorphism + Glistening ========== */
     .glass {
-      background: rgba(255, 255, 255, 0.06);
-      backdrop-filter: blur(22px) saturate(160%);
-      -webkit-backdrop-filter: blur(22px) saturate(160%);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      position: relative;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.45),
-        inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        0 6px 24px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+      overflow: hidden;
     }
 
-    /* ===== Info Panel ===== */
+    /* Glistening shimmer sweep */
+    .glass::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.04) 35%,
+        rgba(255, 255, 255, 0.18) 50%,
+        rgba(255, 255, 255, 0.04) 65%,
+        transparent 100%
+      );
+      animation: glisten 4.5s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    @keyframes glisten {
+      0%   { left: -100%; opacity: 0; }
+      15%  { opacity: 1; }
+      50%  { left: 120%; opacity: 1; }
+      51%  { opacity: 0; }
+      100% { left: 120%; opacity: 0; }
+    }
+
+    /* ===== Info Panel — tighter ===== */
     .info-panel {
       position: absolute;
-      top: 24px;
-      right: 24px;
-      border-radius: 16px;
-      padding: 18px 22px;
-      font-size: 13px;
-      letter-spacing: 0.4px;
+      top: 14px;
+      right: 14px;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 12px;
+      letter-spacing: 0.3px;
       z-index: 20;
-      min-width: 190px;
+      min-width: 160px;
     }
     .info-panel .title {
       color: #fff;
       font-weight: 700;
-      margin-bottom: 10px;
-      font-size: 12px;
-      letter-spacing: 1.2px;
+      margin-bottom: 6px;
+      font-size: 11px;
+      letter-spacing: 1px;
       text-transform: uppercase;
       opacity: 0.95;
+      position: relative;
+      z-index: 2;
     }
     .info-panel .row {
       color: rgba(255, 255, 255, 0.55);
-      margin: 5px 0;
-      font-size: 12.5px;
+      margin: 3px 0;
+      font-size: 12px;
+      position: relative;
+      z-index: 2;
     }
     .info-panel .active {
-      margin-top: 12px;
+      margin-top: 8px;
       color: var(--accent, #00e5ff);
       font-weight: 600;
-      font-size: 12.5px;
-      letter-spacing: 0.6px;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+      position: relative;
+      z-index: 2;
     }
 
-    /* ===== Color Panel ===== */
+    /* ===== Color Panel — tighter ===== */
     .color-panel {
       position: absolute;
-      top: 24px;
-      left: 24px;
-      border-radius: 16px;
-      padding: 12px 16px;
+      top: 14px;
+      left: 14px;
+      border-radius: 14px;
+      padding: 8px 12px;
       z-index: 20;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
     }
     .color-panel label {
-      font-size: 11px;
+      font-size: 10px;
       color: rgba(255, 255, 255, 0.65);
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       text-transform: uppercase;
       font-weight: 500;
+      position: relative;
+      z-index: 2;
     }
     .color-panel input[type="color"] {
       -webkit-appearance: none;
       appearance: none;
       border: none;
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
       cursor: pointer;
       background: transparent;
       padding: 0;
+      position: relative;
+      z-index: 2;
     }
     .color-panel input[type="color"]::-webkit-color-swatch-wrapper {
       padding: 0;
     }
     .color-panel input[type="color"]::-webkit-color-swatch {
       border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* ===== Status Bar ===== */
+    /* ===== Status Bar — tighter ===== */
     .status-bar {
       position: absolute;
-      bottom: 24px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
-      border-radius: 50px;
-      padding: 12px 30px;
-      font-size: 14px;
+      border-radius: 40px;
+      padding: 9px 22px;
+      font-size: 13px;
       font-weight: 500;
-      color: rgba(255, 255, 255, 0.82);
+      color: rgba(255, 255, 255, 0.85);
       z-index: 20;
       white-space: nowrap;
-      max-width: 92%;
+      max-width: 90%;
       text-align: center;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.2px;
+    }
+    .status-bar span {
+      position: relative;
+      z-index: 2;
     }
 
-    /* ===== Signature ===== */
+    /* ===== Signature — tighter ===== */
     .signature {
       position: absolute;
-      bottom: 90px;
-      right: 34px;
+      bottom: 62px;
+      right: 20px;
       font-family: 'Brush Script MT', 'Segoe Script', cursive, serif;
-      font-size: 26px;
-      color: rgba(255, 255, 255, 0.32);
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.3);
       z-index: 20;
       pointer-events: none;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
-    /* ===== Camera Icon ===== */
+    /* ===== Camera Icon — tighter ===== */
     .cam-icon {
       position: absolute;
-      bottom: 24px;
-      left: 28px;
-      width: 52px;
-      height: 52px;
+      bottom: 14px;
+      left: 14px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -176,9 +215,11 @@
       z-index: 20;
     }
     .cam-icon svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       fill: rgba(255, 255, 255, 0.75);
+      position: relative;
+      z-index: 2;
     }
 
     /* ===== Loading ===== */
@@ -191,11 +232,11 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
-      gap: 20px;
+      gap: 16px;
     }
     #loading .spinner {
-      width: 46px;
-      height: 46px;
+      width: 40px;
+      height: 40px;
       border: 3px solid rgba(255, 255, 255, 0.1);
       border-top-color: rgba(255, 255, 255, 0.85);
       border-radius: 50%;
@@ -208,7 +249,7 @@
   <div id="app">
     <div id="loading">
       <div class="spinner"></div>
-      <div style="color:rgba(255,255,255,0.55);font-size:15px;letter-spacing:0.5px;">Loading MediaPipe…</div>
+      <div style="color:rgba(255,255,255,0.55);font-size:14px;letter-spacing:0.4px;">Loading MediaPipe…</div>
     </div>
 
     <video id="video" playsinline autoplay muted></video>
@@ -232,7 +273,7 @@
       <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm8-9.6h-2.4l-1.6-2.4H8l-1.6 2.4H4a2 2 0 0 0-2 2v10.4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7.6a2 2 0 0 0-2-2z"/></svg>
     </div>
 
-    <div class="status-bar glass" id="status">BENTUK KOTAK DENGAN JARI TELUNJUK + IBU JARI</div>
+    <div class="status-bar glass" id="status"><span>Form a box with index + thumb</span></div>
   </div>
 
   <script type="module">
@@ -266,6 +307,10 @@
 
     const TIP = { THUMB: 4, INDEX: 8 };
     const PIP = { INDEX: 6 };
+
+    function setStatus(text) {
+      statusEl.innerHTML = `<span>${text}</span>`;
+    }
 
     async function init() {
       try {
@@ -348,9 +393,9 @@
 
       if (hands.length < 2) {
         smoothCorners = null;
-        statusEl.textContent = hands.length === 0
-          ? "TANGAN BELUM TERDETEKSI"
-          : "TANGAN KEDUA BELUM TERLIHAT";
+        setStatus(hands.length === 0
+          ? "No hands detected"
+          : "Show both hands");
         return;
       }
 
@@ -370,7 +415,7 @@
 
       if (!isIndexExtended(leftHand) || !isIndexExtended(rightHand)) {
         smoothCorners = null;
-        statusEl.textContent = "ANGKAT JARI TELUNJUK + IBU JARI (BENTUK KOTAK)";
+        setStatus("Raise index + thumb to form a box");
         return;
       }
 
@@ -397,7 +442,7 @@
 
       if (width < minDim * 0.12 || height < minDim * 0.10) {
         smoothCorners = null;
-        statusEl.textContent = "LEBARKAN KOTAK DENGAN KEDUA TANGAN";
+        setStatus("Widen the box with both hands");
         return;
       }
 
@@ -410,7 +455,7 @@
       area = Math.abs(area) / 2;
       if (area < (minDim * 0.12) * (minDim * 0.10) * 0.6) {
         smoothCorners = null;
-        statusEl.textContent = "BENTUK KOTAK YANG LEBIH BESAR";
+        setStatus("Make a larger box");
         return;
       }
 
@@ -424,7 +469,7 @@
       }
 
       drawCyberFrame(smoothCorners);
-      statusEl.textContent = "CYBER FRAME AKTIF";
+      setStatus("Cyber Frame Active");
     }
 
     function orderCorners(pts) {
