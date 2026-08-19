@@ -40,7 +40,6 @@
     #video { transform: scaleX(-1); }
     #canvas { pointer-events: none; }
 
-    /* ========== Glassmorphism + Glistening ========== */
     .glass {
       position: relative;
       background: rgba(255, 255, 255, 0.07);
@@ -54,7 +53,6 @@
       overflow: hidden;
     }
 
-    /* Glistening shimmer sweep */
     .glass::before {
       content: "";
       position: absolute;
@@ -83,7 +81,6 @@
       100% { left: 120%; opacity: 0; }
     }
 
-    /* ===== Info Panel — tighter ===== */
     .info-panel {
       position: absolute;
       top: 14px;
@@ -123,7 +120,6 @@
       z-index: 2;
     }
 
-    /* ===== Color Panel — tighter ===== */
     .color-panel {
       position: absolute;
       top: 14px;
@@ -157,16 +153,13 @@
       position: relative;
       z-index: 2;
     }
-    .color-panel input[type="color"]::-webkit-color-swatch-wrapper {
-      padding: 0;
-    }
+    .color-panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
     .color-panel input[type="color"]::-webkit-color-swatch {
       border: 2px solid rgba(255, 255, 255, 0.3);
       border-radius: 6px;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    /* ===== Status Bar — tighter ===== */
     .status-bar {
       position: absolute;
       bottom: 14px;
@@ -183,12 +176,8 @@
       text-align: center;
       letter-spacing: 0.2px;
     }
-    .status-bar span {
-      position: relative;
-      z-index: 2;
-    }
+    .status-bar span { position: relative; z-index: 2; }
 
-    /* ===== Signature — tighter ===== */
     .signature {
       position: absolute;
       bottom: 62px;
@@ -201,7 +190,6 @@
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
     }
 
-    /* ===== Camera Icon — tighter ===== */
     .cam-icon {
       position: absolute;
       bottom: 14px;
@@ -222,7 +210,6 @@
       z-index: 2;
     }
 
-    /* ===== Loading ===== */
     #loading {
       position: absolute;
       inset: 0;
@@ -302,8 +289,13 @@
     });
     document.documentElement.style.setProperty("--accent", accent);
 
+    // Tracking state
     let smoothCorners = null;
-    const SMOOTH = 0.42;
+    let lastValidCorners = null;
+    let missFrames = 0;
+    const MAX_MISS = 12;          // hold last frame for ~12 frames on brief loss
+    const BASE_SMOOTH = 0.55;     // responsive base
+    const FAST_SMOOTH = 0.78;     // even more responsive when moving fast
 
     const TIP = { THUMB: 4, INDEX: 8 };
     const PIP = { INDEX: 6 };
@@ -326,9 +318,9 @@
           },
           runningMode: "VIDEO",
           numHands: 2,
-          minHandDetectionConfidence: 0.5,
-          minHandPresenceConfidence: 0.5,
-          minTrackingConfidence: 0.45
+          minHandDetectionConfidence: 0.35,
+          minHandPresenceConfidence: 0.35,
+          minTrackingConfidence: 0.3
         });
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -383,93 +375,118 @@
       const tip = hand[TIP.INDEX];
       const pip = hand[PIP.INDEX];
       const wrist = hand[0];
-      return dist(tip, wrist) > dist(pip, wrist) * 1.05;
+      return dist(tip, wrist) > dist(pip, wrist) * 0.98; // slightly more forgiving
+    }
+
+    function avgMovement(prev, next) {
+      if (!prev || !next) return 0;
+      let total = 0;
+      for (let i = 0; i < 4; i++) {
+        total += dist(prev[i], next[i]);
+      }
+      return total / 4;
     }
 
     function draw(results) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const hands = results.landmarks || [];
+      let valid = false;
+      let corners = null;
 
-      if (hands.length < 2) {
-        smoothCorners = null;
-        setStatus(hands.length === 0
-          ? "No hands detected"
-          : "Show both hands");
-        return;
-      }
+      if (hands.length >= 2) {
+        const handA = hands[0];
+        const handB = hands[1];
+        const avgX0 = handA[0].x;
+        const avgX1 = handB[0].x;
 
-      const handA = hands[0];
-      const handB = hands[1];
-      const avgX0 = handA[0].x;
-      const avgX1 = handB[0].x;
+        let leftHand, rightHand;
+        if (avgX0 > avgX1) {
+          leftHand  = handA;
+          rightHand = handB;
+        } else {
+          leftHand  = handB;
+          rightHand = handA;
+        }
 
-      let leftHand, rightHand;
-      if (avgX0 > avgX1) {
-        leftHand  = handA;
-        rightHand = handB;
-      } else {
-        leftHand  = handB;
-        rightHand = handA;
-      }
+        if (isIndexExtended(leftHand) && isIndexExtended(rightHand)) {
+          const rawPoints = [
+            leftHand[TIP.INDEX],
+            leftHand[TIP.THUMB],
+            rightHand[TIP.INDEX],
+            rightHand[TIP.THUMB]
+          ];
 
-      if (!isIndexExtended(leftHand) || !isIndexExtended(rightHand)) {
-        smoothCorners = null;
-        setStatus("Raise index + thumb to form a box");
-        return;
-      }
+          const toPx = (pt) => ({
+            x: (1 - pt.x) * canvas.width,
+            y: pt.y * canvas.height
+          });
 
-      const rawPoints = [
-        leftHand[TIP.INDEX],
-        leftHand[TIP.THUMB],
-        rightHand[TIP.INDEX],
-        rightHand[TIP.THUMB]
-      ];
+          corners = orderCorners(rawPoints.map(toPx));
 
-      const toPx = (pt) => ({
-        x: (1 - pt.x) * canvas.width,
-        y: pt.y * canvas.height
-      });
+          const xs = corners.map(p => p.x);
+          const ys = corners.map(p => p.y);
+          const width  = Math.max(...xs) - Math.min(...xs);
+          const height = Math.max(...ys) - Math.min(...ys);
+          const minDim = Math.min(canvas.width, canvas.height);
 
-      let corners = rawPoints.map(toPx);
-      corners = orderCorners(corners);
+          // Slightly relaxed size thresholds so fast motion doesn't kill the frame
+          if (width >= minDim * 0.08 && height >= minDim * 0.07) {
+            let area = 0;
+            for (let i = 0; i < 4; i++) {
+              const j = (i + 1) % 4;
+              area += corners[i].x * corners[j].y;
+              area -= corners[j].x * corners[i].y;
+            }
+            area = Math.abs(area) / 2;
 
-      const xs = corners.map(p => p.x);
-      const ys = corners.map(p => p.y);
-      const width  = Math.max(...xs) - Math.min(...xs);
-      const height = Math.max(...ys) - Math.min(...ys);
-      const minDim = Math.min(canvas.width, canvas.height);
-
-      if (width < minDim * 0.12 || height < minDim * 0.10) {
-        smoothCorners = null;
-        setStatus("Widen the box with both hands");
-        return;
-      }
-
-      let area = 0;
-      for (let i = 0; i < 4; i++) {
-        const j = (i + 1) % 4;
-        area += corners[i].x * corners[j].y;
-        area -= corners[j].x * corners[i].y;
-      }
-      area = Math.abs(area) / 2;
-      if (area < (minDim * 0.12) * (minDim * 0.10) * 0.6) {
-        smoothCorners = null;
-        setStatus("Make a larger box");
-        return;
-      }
-
-      if (!smoothCorners) {
-        smoothCorners = corners.map(p => ({ x: p.x, y: p.y }));
-      } else {
-        for (let i = 0; i < 4; i++) {
-          smoothCorners[i].x += (corners[i].x - smoothCorners[i].x) * SMOOTH;
-          smoothCorners[i].y += (corners[i].y - smoothCorners[i].y) * SMOOTH;
+            if (area >= (minDim * 0.08) * (minDim * 0.07) * 0.4) {
+              valid = true;
+            }
+          }
         }
       }
 
-      drawCyberFrame(smoothCorners);
-      setStatus("Cyber Frame Active");
+      if (valid && corners) {
+        missFrames = 0;
+        lastValidCorners = corners.map(p => ({ x: p.x, y: p.y }));
+
+        // Adaptive smoothing: follow fast moves more closely
+        const movement = avgMovement(smoothCorners, corners);
+        const alpha = movement > 25 ? FAST_SMOOTH : BASE_SMOOTH;
+
+        if (!smoothCorners) {
+          smoothCorners = corners.map(p => ({ x: p.x, y: p.y }));
+        } else {
+          for (let i = 0; i < 4; i++) {
+            smoothCorners[i].x += (corners[i].x - smoothCorners[i].x) * alpha;
+            smoothCorners[i].y += (corners[i].y - smoothCorners[i].y) * alpha;
+          }
+        }
+
+        drawCyberFrame(smoothCorners);
+        setStatus("Cyber Frame Active");
+        return;
+      }
+
+      // Grace period: keep showing last good frame for a short time
+      if (lastValidCorners && missFrames < MAX_MISS) {
+        missFrames++;
+        if (smoothCorners) {
+          drawCyberFrame(smoothCorners);
+          setStatus("Cyber Frame Active");
+          return;
+        }
+      }
+
+      // Fully lost
+      smoothCorners = null;
+      lastValidCorners = null;
+      missFrames = 0;
+
+      if (hands.length === 0) setStatus("No hands detected");
+      else if (hands.length === 1) setStatus("Show both hands");
+      else setStatus("Raise index + thumb to form a box");
     }
 
     function orderCorners(pts) {
