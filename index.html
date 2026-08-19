@@ -42,13 +42,13 @@
 
     .glass {
       position: relative;
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(22px) saturate(170%);
+      -webkit-backdrop-filter: blur(22px) saturate(170%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow:
         0 6px 24px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16),
         inset 0 -1px 0 rgba(0, 0, 0, 0.12);
       overflow: hidden;
     }
@@ -64,7 +64,7 @@
         105deg,
         transparent 0%,
         rgba(255, 255, 255, 0.04) 35%,
-        rgba(255, 255, 255, 0.18) 50%,
+        rgba(255, 255, 255, 0.2) 50%,
         rgba(255, 255, 255, 0.04) 65%,
         transparent 100%
       );
@@ -79,6 +79,79 @@
       50%  { left: 120%; opacity: 1; }
       51%  { opacity: 0; }
       100% { left: 120%; opacity: 0; }
+    }
+
+    /* Left control stack */
+    .controls {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .color-panel {
+      border-radius: 14px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .color-panel label {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.65);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      font-weight: 500;
+      position: relative;
+      z-index: 2;
+    }
+    .color-panel input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+      padding: 0;
+      position: relative;
+      z-index: 2;
+    }
+    .color-panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-panel input[type="color"]::-webkit-color-swatch {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .glitch-btn {
+      border-radius: 14px;
+      padding: 9px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: rgba(255, 255, 255, 0.75);
+      cursor: pointer;
+      border: none;
+      text-align: left;
+      transition: color 0.2s, background 0.2s;
+      position: relative;
+      z-index: 2;
+      font-family: inherit;
+    }
+    .glitch-btn:hover {
+      color: #fff;
+    }
+    .glitch-btn.on {
+      color: #ff6b6b;
+    }
+    .glitch-btn span {
+      position: relative;
+      z-index: 2;
     }
 
     .info-panel {
@@ -118,46 +191,6 @@
       letter-spacing: 0.5px;
       position: relative;
       z-index: 2;
-    }
-
-    .color-panel {
-      position: absolute;
-      top: 14px;
-      left: 14px;
-      border-radius: 14px;
-      padding: 8px 12px;
-      z-index: 20;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .color-panel label {
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.65);
-      letter-spacing: 0.6px;
-      text-transform: uppercase;
-      font-weight: 500;
-      position: relative;
-      z-index: 2;
-    }
-    .color-panel input[type="color"] {
-      -webkit-appearance: none;
-      appearance: none;
-      border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      cursor: pointer;
-      background: transparent;
-      padding: 0;
-      position: relative;
-      z-index: 2;
-    }
-    .color-panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-panel input[type="color"]::-webkit-color-swatch {
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
     .status-bar {
@@ -242,9 +275,14 @@
     <video id="video" playsinline autoplay muted></video>
     <canvas id="canvas"></canvas>
 
-    <div class="color-panel glass">
-      <label>Frame</label>
-      <input type="color" id="colorPicker" value="#00e5ff" title="Change frame color" />
+    <div class="controls">
+      <div class="color-panel glass">
+        <label>Frame</label>
+        <input type="color" id="colorPicker" value="#00e5ff" title="Change frame color" />
+      </div>
+      <button class="glitch-btn glass" id="glitchBtn" type="button">
+        <span>Turn On Glitch Effect</span>
+      </button>
     </div>
 
     <div class="info-panel glass">
@@ -276,10 +314,12 @@
     const loading = document.getElementById("loading");
     const colorPicker = document.getElementById("colorPicker");
     const frameStatus = document.getElementById("frameStatus");
+    const glitchBtn = document.getElementById("glitchBtn");
 
     let handLandmarker = null;
     let lastVideoTime = -1;
     let running = false;
+    let glitchOn = false;
 
     let accent = "#00e5ff";
     colorPicker.addEventListener("input", (e) => {
@@ -289,13 +329,21 @@
     });
     document.documentElement.style.setProperty("--accent", accent);
 
+    glitchBtn.addEventListener("click", () => {
+      glitchOn = !glitchOn;
+      glitchBtn.classList.toggle("on", glitchOn);
+      glitchBtn.querySelector("span").textContent = glitchOn
+        ? "Turn Off Glitch Effect"
+        : "Turn On Glitch Effect";
+    });
+
     // Tracking state
     let smoothCorners = null;
     let lastValidCorners = null;
     let missFrames = 0;
-    const MAX_MISS = 12;          // hold last frame for ~12 frames on brief loss
-    const BASE_SMOOTH = 0.55;     // responsive base
-    const FAST_SMOOTH = 0.78;     // even more responsive when moving fast
+    const MAX_MISS = 16;
+    const BASE_SMOOTH = 0.58;
+    const FAST_SMOOTH = 0.82;
 
     const TIP = { THUMB: 4, INDEX: 8 };
     const PIP = { INDEX: 6 };
@@ -318,9 +366,9 @@
           },
           runningMode: "VIDEO",
           numHands: 2,
-          minHandDetectionConfidence: 0.35,
-          minHandPresenceConfidence: 0.35,
-          minTrackingConfidence: 0.3
+          minHandDetectionConfidence: 0.32,
+          minHandPresenceConfidence: 0.32,
+          minTrackingConfidence: 0.28
         });
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -375,15 +423,13 @@
       const tip = hand[TIP.INDEX];
       const pip = hand[PIP.INDEX];
       const wrist = hand[0];
-      return dist(tip, wrist) > dist(pip, wrist) * 0.98; // slightly more forgiving
+      return dist(tip, wrist) > dist(pip, wrist) * 0.95;
     }
 
     function avgMovement(prev, next) {
       if (!prev || !next) return 0;
       let total = 0;
-      for (let i = 0; i < 4; i++) {
-        total += dist(prev[i], next[i]);
-      }
+      for (let i = 0; i < 4; i++) total += dist(prev[i], next[i]);
       return total / 4;
     }
 
@@ -402,11 +448,9 @@
 
         let leftHand, rightHand;
         if (avgX0 > avgX1) {
-          leftHand  = handA;
-          rightHand = handB;
+          leftHand = handA; rightHand = handB;
         } else {
-          leftHand  = handB;
-          rightHand = handA;
+          leftHand = handB; rightHand = handA;
         }
 
         if (isIndexExtended(leftHand) && isIndexExtended(rightHand)) {
@@ -430,8 +474,7 @@
           const height = Math.max(...ys) - Math.min(...ys);
           const minDim = Math.min(canvas.width, canvas.height);
 
-          // Slightly relaxed size thresholds so fast motion doesn't kill the frame
-          if (width >= minDim * 0.08 && height >= minDim * 0.07) {
+          if (width >= minDim * 0.07 && height >= minDim * 0.06) {
             let area = 0;
             for (let i = 0; i < 4; i++) {
               const j = (i + 1) % 4;
@@ -439,8 +482,7 @@
               area -= corners[j].x * corners[i].y;
             }
             area = Math.abs(area) / 2;
-
-            if (area >= (minDim * 0.08) * (minDim * 0.07) * 0.4) {
+            if (area >= (minDim * 0.07) * (minDim * 0.06) * 0.35) {
               valid = true;
             }
           }
@@ -451,9 +493,8 @@
         missFrames = 0;
         lastValidCorners = corners.map(p => ({ x: p.x, y: p.y }));
 
-        // Adaptive smoothing: follow fast moves more closely
         const movement = avgMovement(smoothCorners, corners);
-        const alpha = movement > 25 ? FAST_SMOOTH : BASE_SMOOTH;
+        const alpha = movement > 22 ? FAST_SMOOTH : BASE_SMOOTH;
 
         if (!smoothCorners) {
           smoothCorners = corners.map(p => ({ x: p.x, y: p.y }));
@@ -469,7 +510,6 @@
         return;
       }
 
-      // Grace period: keep showing last good frame for a short time
       if (lastValidCorners && missFrames < MAX_MISS) {
         missFrames++;
         if (smoothCorners) {
@@ -479,7 +519,6 @@
         }
       }
 
-      // Fully lost
       smoothCorners = null;
       lastValidCorners = null;
       missFrames = 0;
@@ -531,7 +570,7 @@
       ctx.moveTo(corners[0].x, corners[0].y);
       for (let i = 1; i < 4; i++) ctx.lineTo(corners[i].x, corners[i].y);
       ctx.closePath();
-      ctx.fillStyle = hexToRgba(col, 0.15);
+      ctx.fillStyle = hexToRgba(col, 0.14);
       ctx.fill();
 
       ctx.clip();
@@ -540,8 +579,11 @@
       const maxY = Math.max(...corners.map(p => p.y));
       const minX = Math.min(...corners.map(p => p.x));
       const maxX = Math.max(...corners.map(p => p.x));
+      const w = maxX - minX;
+      const h = maxY - minY;
 
-      ctx.strokeStyle = hexToRgba(col, 0.22);
+      // Scanlines (always)
+      ctx.strokeStyle = hexToRgba(col, 0.2);
       ctx.lineWidth = 1;
       for (let y = minY; y < maxY; y += 7) {
         ctx.beginPath();
@@ -550,17 +592,64 @@
         ctx.stroke();
       }
 
-      const range = Math.max(30, maxY - minY);
+      // Moving highlight
+      const range = Math.max(30, h);
       const t = (performance.now() / 28) % (range + 40);
-      ctx.strokeStyle = hexToRgba(col, 0.45);
+      ctx.strokeStyle = hexToRgba(col, 0.42);
       ctx.lineWidth = 1.8;
       ctx.beginPath();
       ctx.moveTo(minX - 20, minY + t);
       ctx.lineTo(maxX + 20, minY + t);
       ctx.stroke();
 
+      // ===== TV Static / Glitch Effect =====
+      if (glitchOn) {
+        // Noise dots
+        const density = Math.floor((w * h) / 900);
+        for (let i = 0; i < density; i++) {
+          const nx = minX + Math.random() * w;
+          const ny = minY + Math.random() * h;
+          const bright = Math.random();
+          ctx.fillStyle = `rgba(${bright > 0.5 ? 255 : 0},${bright > 0.5 ? 255 : 0},${bright > 0.5 ? 255 : 0},${0.15 + Math.random() * 0.35})`;
+          ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
+        }
+
+        // Horizontal tear / static bands
+        if (Math.random() > 0.55) {
+          const bandY = minY + Math.random() * h;
+          const bandH = 2 + Math.random() * 8;
+          ctx.fillStyle = `rgba(255,255,255,${0.08 + Math.random() * 0.12})`;
+          ctx.fillRect(minX, bandY, w, bandH);
+        }
+
+        // RGB shift lines
+        if (Math.random() > 0.7) {
+          const gy = minY + Math.random() * h;
+          ctx.strokeStyle = "rgba(255,40,40,0.35)";
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(minX, gy);
+          ctx.lineTo(maxX, gy + (Math.random() - 0.5) * 4);
+          ctx.stroke();
+
+          ctx.strokeStyle = "rgba(40,255,120,0.3)";
+          ctx.beginPath();
+          ctx.moveTo(minX, gy + 2);
+          ctx.lineTo(maxX, gy + 2 + (Math.random() - 0.5) * 4);
+          ctx.stroke();
+        }
+
+        // Occasional vertical glitch slice
+        if (Math.random() > 0.85) {
+          const gx = minX + Math.random() * w;
+          ctx.fillStyle = "rgba(0,0,0,0.25)";
+          ctx.fillRect(gx, minY, 3 + Math.random() * 6, h);
+        }
+      }
+
       ctx.restore();
 
+      // Label
       const labelX = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4;
       const labelY = Math.min(...corners.map(p => p.y)) - 20;
 
@@ -572,6 +661,7 @@
       ctx.fillText("CYBER FRAME // ACTIVE", labelX, labelY);
       ctx.shadowBlur = 0;
 
+      // Corner dots
       ctx.fillStyle = col;
       corners.forEach(p => {
         ctx.beginPath();
