@@ -3,244 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chizzuu Paparaz — Cyber Frame</title>
+  <title>Cyber Frame</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       background: #000;
-      color: #e8e8e8;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      overflow: hidden;
+      color: #fff;
+      font-family: system-ui, -apple-system, sans-serif;
       height: 100vh;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
     #app {
       position: relative;
       width: min(1280px, 96vw);
       height: min(800px, 92vh);
-      background: #050505;
-      border-radius: 20px;
+      background: #000;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.06),
-        0 20px 50px rgba(0, 0, 0, 0.85);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06);
     }
 
-    #video, #canvas {
+    #video, #gl, #ui {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-
-    #video { transform: scaleX(-1); }
-    #canvas { pointer-events: none; }
-
-    .glass {
-      position: relative;
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(22px) saturate(170%);
-      -webkit-backdrop-filter: blur(22px) saturate(170%);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      box-shadow:
-        0 6px 24px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.12);
-      overflow: hidden;
-    }
-
-    .glass::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 60%;
+      inset: 0;
+      width: 100%;
       height: 100%;
-      background: linear-gradient(
-        105deg,
-        transparent 0%,
-        rgba(255, 255, 255, 0.04) 35%,
-        rgba(255, 255, 255, 0.2) 50%,
-        rgba(255, 255, 255, 0.04) 65%,
-        transparent 100%
-      );
-      animation: glisten 4.5s ease-in-out infinite;
+    }
+
+    #video {
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    #gl, #ui {
       pointer-events: none;
-      z-index: 1;
     }
 
-    @keyframes glisten {
-      0%   { left: -100%; opacity: 0; }
-      15%  { opacity: 1; }
-      50%  { left: 120%; opacity: 1; }
-      51%  { opacity: 0; }
-      100% { left: 120%; opacity: 0; }
-    }
-
-    /* Left control stack */
-    .controls {
+    /* ===== Minimal clean controls ===== */
+    .bar {
       position: absolute;
-      top: 14px;
-      left: 14px;
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .color-panel {
-      border-radius: 14px;
-      padding: 8px 12px;
+      z-index: 30;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1);
     }
-    .color-panel label {
-      font-size: 10px;
-      color: rgba(255, 255, 255, 0.65);
-      letter-spacing: 0.6px;
+
+    .bar.top-left {
+      top: 12px;
+      left: 12px;
+    }
+
+    .bar.top-right {
+      top: 12px;
+      right: 12px;
+      font-size: 11px;
+      letter-spacing: 0.8px;
+      color: rgba(255,255,255,0.5);
       text-transform: uppercase;
-      font-weight: 500;
-      position: relative;
-      z-index: 2;
     }
-    .color-panel input[type="color"] {
+
+    .bar.bottom {
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: rgba(255,255,255,0.7);
+      white-space: nowrap;
+      max-width: 90%;
+    }
+
+    .bar label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    input[type="color"] {
       -webkit-appearance: none;
       appearance: none;
       border: none;
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
       cursor: pointer;
       background: transparent;
       padding: 0;
-      position: relative;
-      z-index: 2;
     }
-    .color-panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-panel input[type="color"]::-webkit-color-swatch {
-      border: 2px solid rgba(255, 255, 255, 0.3);
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch {
+      border: 1.5px solid rgba(255,255,255,0.25);
       border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
 
-    .glitch-btn {
-      border-radius: 14px;
-      padding: 9px 14px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.4px;
-      color: rgba(255, 255, 255, 0.75);
-      cursor: pointer;
-      border: none;
-      text-align: left;
-      transition: color 0.2s, background 0.2s;
-      position: relative;
-      z-index: 2;
-      font-family: inherit;
-    }
-    .glitch-btn:hover {
-      color: #fff;
-    }
-    .glitch-btn.on {
-      color: #ff6b6b;
-    }
-    .glitch-btn span {
-      position: relative;
-      z-index: 2;
-    }
-
-    .info-panel {
-      position: absolute;
-      top: 14px;
-      right: 14px;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-size: 12px;
+    .btn {
+      font: 600 11px system-ui, sans-serif;
       letter-spacing: 0.3px;
-      z-index: 20;
-      min-width: 160px;
+      color: rgba(255,255,255,0.65);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 4px 2px;
+      transition: color 0.15s;
     }
-    .info-panel .title {
-      color: #fff;
-      font-weight: 700;
-      margin-bottom: 6px;
-      font-size: 11px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      opacity: 0.95;
-      position: relative;
-      z-index: 2;
-    }
-    .info-panel .row {
-      color: rgba(255, 255, 255, 0.55);
-      margin: 3px 0;
-      font-size: 12px;
-      position: relative;
-      z-index: 2;
-    }
-    .info-panel .active {
-      margin-top: 8px;
-      color: var(--accent, #00e5ff);
-      font-weight: 600;
-      font-size: 12px;
-      letter-spacing: 0.5px;
-      position: relative;
-      z-index: 2;
-    }
+    .btn:hover { color: #fff; }
+    .btn.on { color: #ff5c5c; }
 
-    .status-bar {
-      position: absolute;
-      bottom: 14px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-radius: 40px;
-      padding: 9px 22px;
-      font-size: 13px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.85);
-      z-index: 20;
-      white-space: nowrap;
-      max-width: 90%;
-      text-align: center;
-      letter-spacing: 0.2px;
-    }
-    .status-bar span { position: relative; z-index: 2; }
-
-    .signature {
-      position: absolute;
-      bottom: 62px;
-      right: 20px;
-      font-family: 'Brush Script MT', 'Segoe Script', cursive, serif;
-      font-size: 22px;
-      color: rgba(255, 255, 255, 0.3);
-      z-index: 20;
-      pointer-events: none;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    }
-
-    .cam-icon {
-      position: absolute;
-      bottom: 14px;
-      left: 14px;
-      width: 44px;
-      height: 44px;
+    .dot {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 20;
-    }
-    .cam-icon svg {
-      width: 20px;
-      height: 20px;
-      fill: rgba(255, 255, 255, 0.75);
-      position: relative;
-      z-index: 2;
+      background: var(--accent, #00e5ff);
+      margin-right: 2px;
     }
 
     #loading {
@@ -251,113 +136,325 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 14px;
       z-index: 100;
-      gap: 16px;
+      color: rgba(255,255,255,0.45);
+      font-size: 13px;
     }
-    #loading .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: rgba(255, 255, 255, 0.85);
+    .spin {
+      width: 32px;
+      height: 32px;
+      border: 2.5px solid rgba(255,255,255,0.1);
+      border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: s 0.65s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes s { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div id="app">
     <div id="loading">
-      <div class="spinner"></div>
-      <div style="color:rgba(255,255,255,0.55);font-size:14px;letter-spacing:0.4px;">Loading MediaPipe…</div>
+      <div class="spin"></div>
+      <div>Loading…</div>
     </div>
 
     <video id="video" playsinline autoplay muted></video>
-    <canvas id="canvas"></canvas>
+    <canvas id="gl"></canvas>
+    <canvas id="ui"></canvas>
 
-    <div class="controls">
-      <div class="color-panel glass">
-        <label>Frame</label>
-        <input type="color" id="colorPicker" value="#00e5ff" title="Change frame color" />
-      </div>
-      <button class="glitch-btn glass" id="glitchBtn" type="button">
-        <span>Turn On Glitch Effect</span>
-      </button>
+    <div class="bar top-left">
+      <label>Color</label>
+      <input type="color" id="colorPicker" value="#00e5ff" />
+      <button class="btn" id="glitchBtn" type="button">Glitch Off</button>
     </div>
 
-    <div class="info-panel glass">
-      <div class="title">Camera Node / 02</div>
-      <div class="row">Subject</div>
-      <div class="row">Detection</div>
-      <div class="active" id="frameStatus">Hand Frame AC</div>
+    <div class="bar top-right">
+      <div class="dot" id="liveDot"></div>
+      <span id="nodeLabel">Node 02</span>
     </div>
 
-    <div class="signature">Chizzuu*</div>
-
-    <div class="cam-icon glass">
-      <svg viewBox="0 0 24 24"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4zm8-9.6h-2.4l-1.6-2.4H8l-1.6 2.4H4a2 2 0 0 0-2 2v10.4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7.6a2 2 0 0 0-2-2z"/></svg>
-    </div>
-
-    <div class="status-bar glass" id="status"><span>Form a box with index + thumb</span></div>
+    <div class="bar bottom" id="status">Form a box with index + thumb</div>
   </div>
 
   <script type="module">
-    import {
-      HandLandmarker,
-      FilesetResolver
-    } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+    import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
 
     const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
+    const glCanvas = document.getElementById("gl");
+    const uiCanvas = document.getElementById("ui");
+    const ui = uiCanvas.getContext("2d");
     const statusEl = document.getElementById("status");
     const loading = document.getElementById("loading");
     const colorPicker = document.getElementById("colorPicker");
-    const frameStatus = document.getElementById("frameStatus");
     const glitchBtn = document.getElementById("glitchBtn");
+    const liveDot = document.getElementById("liveDot");
 
     let handLandmarker = null;
     let lastVideoTime = -1;
     let running = false;
     let glitchOn = false;
+    let accent = [0, 0.9, 1]; // rgb 0-1
 
-    let accent = "#00e5ff";
     colorPicker.addEventListener("input", (e) => {
-      accent = e.target.value;
-      document.documentElement.style.setProperty("--accent", accent);
-      frameStatus.style.color = accent;
+      const h = e.target.value;
+      accent = [
+        parseInt(h.slice(1, 3), 16) / 255,
+        parseInt(h.slice(3, 5), 16) / 255,
+        parseInt(h.slice(5, 7), 16) / 255
+      ];
+      liveDot.style.background = h;
+      document.documentElement.style.setProperty("--accent", h);
     });
-    document.documentElement.style.setProperty("--accent", accent);
 
     glitchBtn.addEventListener("click", () => {
       glitchOn = !glitchOn;
       glitchBtn.classList.toggle("on", glitchOn);
-      glitchBtn.querySelector("span").textContent = glitchOn
-        ? "Turn Off Glitch Effect"
-        : "Turn On Glitch Effect";
+      glitchBtn.textContent = glitchOn ? "Glitch On" : "Glitch Off";
     });
 
-    // Tracking state
-    let smoothCorners = null;
-    let lastValidCorners = null;
-    let missFrames = 0;
-    const MAX_MISS = 16;
-    const BASE_SMOOTH = 0.58;
-    const FAST_SMOOTH = 0.82;
-
+    // Tracking — no grace period (instant hide)
+    let smooth = null;
     const TIP = { THUMB: 4, INDEX: 8 };
     const PIP = { INDEX: 6 };
+    const BASE = 0.6;
+    const FAST = 0.85;
 
-    function setStatus(text) {
-      statusEl.innerHTML = `<span>${text}</span>`;
+    // ===== WebGL setup =====
+    const gl = glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
+    if (!gl) alert("WebGL not supported");
+
+    const VS = `
+      attribute vec2 a_pos;
+      attribute vec2 a_uv;
+      varying vec2 v_uv;
+      void main() {
+        v_uv = a_uv;
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+      }
+    `;
+
+    const FS = `
+      precision mediump float;
+      varying vec2 v_uv;
+      uniform vec3 u_color;
+      uniform float u_time;
+      uniform float u_glitch;
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+      }
+
+      void main() {
+        vec2 uv = v_uv;
+
+        // Base tint
+        vec3 col = u_color * 0.22;
+
+        // Scanlines
+        float scan = 0.55 + 0.45 * sin(uv.y * 220.0 + u_time * 2.0);
+        col *= scan;
+
+        // Moving beam
+        float beam = smoothstep(0.02, 0.0, abs(fract(uv.y * 0.8 - u_time * 0.15) - 0.5) - 0.48);
+        col += u_color * beam * 0.35;
+
+        // Soft vignette toward edges of quad
+        float edge = smoothstep(0.0, 0.08, uv.x) * smoothstep(1.0, 0.92, uv.x)
+                   * smoothstep(0.0, 0.08, uv.y) * smoothstep(1.0, 0.92, uv.y);
+        col *= 0.7 + 0.3 * edge;
+
+        // Glitch / TV static
+        if (u_glitch > 0.5) {
+          float n = hash(uv * 40.0 + floor(u_time * 24.0));
+          col += vec3(n) * 0.18;
+
+          // Horizontal tear
+          float tear = step(0.97, hash(vec2(floor(u_time * 10.0), floor(uv.y * 30.0))));
+          col += tear * 0.2;
+
+          // RGB split
+          float shift = (hash(vec2(u_time, 1.0)) - 0.5) * 0.03 * u_glitch;
+          col.r += hash(uv + vec2(shift, 0.0)) * 0.08;
+          col.b += hash(uv - vec2(shift, 0.0)) * 0.08;
+        }
+
+        // Alpha: stronger in center, soft
+        float alpha = 0.55 * edge + 0.15;
+        if (u_glitch > 0.5) alpha += 0.08;
+
+        gl_FragColor = vec4(col, alpha);
+      }
+    `;
+
+    function compile(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error(gl.getShaderInfoLog(s));
+      }
+      return s;
     }
 
+    const prog = gl.createProgram();
+    gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
+    gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
+    gl.linkProgram(prog);
+    gl.useProgram(prog);
+
+    const aPos = gl.getAttribLocation(prog, "a_pos");
+    const aUv = gl.getAttribLocation(prog, "a_uv");
+    const uColor = gl.getUniformLocation(prog, "u_color");
+    const uTime = gl.getUniformLocation(prog, "u_time");
+    const uGlitch = gl.getUniformLocation(prog, "u_glitch");
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+
+    // pos.x pos.y uv.x uv.y  (2 triangles)
+    const verts = new Float32Array(24);
+
+    function setQuad(corners, W, H) {
+      // corners ordered clockwise; map to clip space (-1..1)
+      // We use order: TL, TR, BR, BL approximately via sorted corners
+      const toClip = (p) => [ (p.x / W) * 2 - 1, 1 - (p.y / H) * 2 ];
+
+      // Assign UVs by sorting into roughly TL TR BR BL
+      const sorted = corners.slice().sort((a, b) => a.y - b.y);
+      const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
+      const bot = sorted.slice(2, 4).sort((a, b) => a.x - b.x);
+      const TL = top[0], TR = top[1], BL = bot[0], BR = bot[1];
+
+      const pts = [
+        [...toClip(TL), 0, 0],
+        [...toClip(TR), 1, 0],
+        [...toClip(BR), 1, 1],
+        [...toClip(TL), 0, 0],
+        [...toClip(BR), 1, 1],
+        [...toClip(BL), 0, 1]
+      ];
+
+      for (let i = 0; i < 6; i++) {
+        verts[i * 4]     = pts[i][0];
+        verts[i * 4 + 1] = pts[i][1];
+        verts[i * 4 + 2] = pts[i][2];
+        verts[i * 4 + 3] = pts[i][3];
+      }
+      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.DYNAMIC_DRAW);
+    }
+
+    function drawGL(corners) {
+      const W = glCanvas.width;
+      const H = glCanvas.height;
+      gl.viewport(0, 0, W, H);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+      setQuad(corners, W, H);
+
+      gl.useProgram(prog);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 16, 0);
+      gl.enableVertexAttribArray(aUv);
+      gl.vertexAttribPointer(aUv, 2, gl.FLOAT, false, 16, 8);
+
+      gl.uniform3fv(uColor, accent);
+      gl.uniform1f(uTime, performance.now() / 1000);
+      gl.uniform1f(uGlitch, glitchOn ? 1.0 : 0.0);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    function clearGL() {
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+
+    // ===== 2D border / label =====
+    function drawBorder(corners) {
+      const W = uiCanvas.width;
+      const H = uiCanvas.height;
+      ui.clearRect(0, 0, W, H);
+
+      const col = `rgb(${accent[0]*255|0},${accent[1]*255|0},${accent[2]*255|0})`;
+
+      ui.save();
+      ui.beginPath();
+      ui.moveTo(corners[0].x, corners[0].y);
+      for (let i = 1; i < 4; i++) ui.lineTo(corners[i].x, corners[i].y);
+      ui.closePath();
+
+      ui.shadowColor = col;
+      ui.shadowBlur = 18;
+      ui.strokeStyle = col;
+      ui.lineWidth = 2.5;
+      ui.stroke();
+
+      ui.shadowBlur = 0;
+      ui.strokeStyle = "rgba(255,255,255,0.85)";
+      ui.lineWidth = 1.1;
+      ui.stroke();
+
+      // corners
+      ui.fillStyle = col;
+      corners.forEach(p => {
+        ui.beginPath();
+        ui.arc(p.x, p.y, 3.5, 0, Math.PI * 2);
+        ui.fill();
+      });
+
+      // label
+      const lx = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4;
+      const ly = Math.min(...corners.map(p => p.y)) - 16;
+      ui.font = "600 12px system-ui, sans-serif";
+      ui.fillStyle = col;
+      ui.textAlign = "center";
+      ui.shadowColor = "rgba(0,0,0,0.8)";
+      ui.shadowBlur = 4;
+      ui.fillText("CYBER FRAME // ACTIVE", lx, ly);
+      ui.restore();
+    }
+
+    function clearUI() {
+      ui.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
+    }
+
+    // ===== Tracking helpers =====
+    function dist(a, b) {
+      const dx = a.x - b.x, dy = a.y - b.y;
+      return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    function isExtended(hand) {
+      return dist(hand[TIP.INDEX], hand[0]) > dist(hand[PIP.INDEX], hand[0]) * 0.95;
+    }
+
+    function orderCorners(pts) {
+      const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
+      const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
+      return pts.slice().sort((a, b) =>
+        Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx)
+      );
+    }
+
+    function avgMove(a, b) {
+      if (!a || !b) return 0;
+      let t = 0;
+      for (let i = 0; i < 4; i++) t += dist(a[i], b[i]);
+      return t / 4;
+    }
+
+    // ===== Main =====
     async function init() {
       try {
         const vision = await FilesetResolver.forVisionTasks(
           "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
         );
-
         handLandmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath:
@@ -372,19 +469,19 @@
         });
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: "user"
-          },
+          video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
           audio: false
         });
         video.srcObject = stream;
         await video.play();
 
         function resize() {
-          canvas.width = video.videoWidth || 1280;
-          canvas.height = video.videoHeight || 720;
+          const w = video.videoWidth || 1280;
+          const h = video.videoHeight || 720;
+          glCanvas.width = w;
+          glCanvas.height = h;
+          uiCanvas.width = w;
+          uiCanvas.height = h;
         }
         video.addEventListener("loadedmetadata", resize);
         window.addEventListener("resize", resize);
@@ -395,16 +492,13 @@
         requestAnimationFrame(loop);
       } catch (err) {
         console.error(err);
-        loading.innerHTML = `<div style="color:#ff6b6b;padding:24px;text-align:center;font-size:15px;">
-          Camera / MediaPipe error<br><small style="opacity:0.8">${err.message}</small>
-        </div>`;
+        loading.innerHTML = `<div style="color:#ff6b6b;text-align:center;padding:20px">Camera error<br><small>${err.message}</small></div>`;
       }
     }
 
     function loop() {
       if (!running) return;
       requestAnimationFrame(loop);
-
       if (video.readyState < 2) return;
       if (video.currentTime === lastVideoTime) return;
       lastVideoTime = video.currentTime;
@@ -413,261 +507,72 @@
       draw(results);
     }
 
-    function dist(a, b) {
-      const dx = a.x - b.x;
-      const dy = a.y - b.y;
-      return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    function isIndexExtended(hand) {
-      const tip = hand[TIP.INDEX];
-      const pip = hand[PIP.INDEX];
-      const wrist = hand[0];
-      return dist(tip, wrist) > dist(pip, wrist) * 0.95;
-    }
-
-    function avgMovement(prev, next) {
-      if (!prev || !next) return 0;
-      let total = 0;
-      for (let i = 0; i < 4; i++) total += dist(prev[i], next[i]);
-      return total / 4;
-    }
-
     function draw(results) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
       const hands = results.landmarks || [];
       let valid = false;
       let corners = null;
 
       if (hands.length >= 2) {
-        const handA = hands[0];
-        const handB = hands[1];
-        const avgX0 = handA[0].x;
-        const avgX1 = handB[0].x;
+        const a = hands[0], b = hands[1];
+        let left, right;
+        if (a[0].x > b[0].x) { left = a; right = b; }
+        else { left = b; right = a; }
 
-        let leftHand, rightHand;
-        if (avgX0 > avgX1) {
-          leftHand = handA; rightHand = handB;
-        } else {
-          leftHand = handB; rightHand = handA;
-        }
-
-        if (isIndexExtended(leftHand) && isIndexExtended(rightHand)) {
-          const rawPoints = [
-            leftHand[TIP.INDEX],
-            leftHand[TIP.THUMB],
-            rightHand[TIP.INDEX],
-            rightHand[TIP.THUMB]
+        if (isExtended(left) && isExtended(right)) {
+          const raw = [
+            left[TIP.INDEX], left[TIP.THUMB],
+            right[TIP.INDEX], right[TIP.THUMB]
           ];
-
-          const toPx = (pt) => ({
-            x: (1 - pt.x) * canvas.width,
-            y: pt.y * canvas.height
+          const toPx = (p) => ({
+            x: (1 - p.x) * uiCanvas.width,
+            y: p.y * uiCanvas.height
           });
-
-          corners = orderCorners(rawPoints.map(toPx));
+          corners = orderCorners(raw.map(toPx));
 
           const xs = corners.map(p => p.x);
           const ys = corners.map(p => p.y);
-          const width  = Math.max(...xs) - Math.min(...xs);
-          const height = Math.max(...ys) - Math.min(...ys);
-          const minDim = Math.min(canvas.width, canvas.height);
+          const w = Math.max(...xs) - Math.min(...xs);
+          const h = Math.max(...ys) - Math.min(...ys);
+          const m = Math.min(uiCanvas.width, uiCanvas.height);
 
-          if (width >= minDim * 0.07 && height >= minDim * 0.06) {
+          if (w >= m * 0.07 && h >= m * 0.06) {
             let area = 0;
             for (let i = 0; i < 4; i++) {
               const j = (i + 1) % 4;
-              area += corners[i].x * corners[j].y;
-              area -= corners[j].x * corners[i].y;
+              area += corners[i].x * corners[j].y - corners[j].x * corners[i].y;
             }
-            area = Math.abs(area) / 2;
-            if (area >= (minDim * 0.07) * (minDim * 0.06) * 0.35) {
-              valid = true;
-            }
+            if (Math.abs(area) / 2 >= m * m * 0.003) valid = true;
           }
         }
       }
 
       if (valid && corners) {
-        missFrames = 0;
-        lastValidCorners = corners.map(p => ({ x: p.x, y: p.y }));
+        const move = avgMove(smooth, corners);
+        const alpha = move > 20 ? FAST : BASE;
 
-        const movement = avgMovement(smoothCorners, corners);
-        const alpha = movement > 22 ? FAST_SMOOTH : BASE_SMOOTH;
-
-        if (!smoothCorners) {
-          smoothCorners = corners.map(p => ({ x: p.x, y: p.y }));
+        if (!smooth) {
+          smooth = corners.map(p => ({ x: p.x, y: p.y }));
         } else {
           for (let i = 0; i < 4; i++) {
-            smoothCorners[i].x += (corners[i].x - smoothCorners[i].x) * alpha;
-            smoothCorners[i].y += (corners[i].y - smoothCorners[i].y) * alpha;
+            smooth[i].x += (corners[i].x - smooth[i].x) * alpha;
+            smooth[i].y += (corners[i].y - smooth[i].y) * alpha;
           }
         }
 
-        drawCyberFrame(smoothCorners);
-        setStatus("Cyber Frame Active");
+        drawGL(smooth);
+        drawBorder(smooth);
+        statusEl.textContent = "Cyber Frame Active";
         return;
       }
 
-      if (lastValidCorners && missFrames < MAX_MISS) {
-        missFrames++;
-        if (smoothCorners) {
-          drawCyberFrame(smoothCorners);
-          setStatus("Cyber Frame Active");
-          return;
-        }
-      }
+      // Instant hide — no grace period
+      smooth = null;
+      clearGL();
+      clearUI();
 
-      smoothCorners = null;
-      lastValidCorners = null;
-      missFrames = 0;
-
-      if (hands.length === 0) setStatus("No hands detected");
-      else if (hands.length === 1) setStatus("Show both hands");
-      else setStatus("Raise index + thumb to form a box");
-    }
-
-    function orderCorners(pts) {
-      const cx = (pts[0].x + pts[1].x + pts[2].x + pts[3].x) / 4;
-      const cy = (pts[0].y + pts[1].y + pts[2].y + pts[3].y) / 4;
-      return pts.slice().sort((a, b) =>
-        Math.atan2(a.y - cy, a.x - cx) - Math.atan2(b.y - cy, b.x - cx)
-      );
-    }
-
-    function hexToRgba(hex, alpha) {
-      const r = parseInt(hex.slice(1, 3), 16);
-      const g = parseInt(hex.slice(3, 5), 16);
-      const b = parseInt(hex.slice(5, 7), 16);
-      return `rgba(${r},${g},${b},${alpha})`;
-    }
-
-    function drawCyberFrame(corners) {
-      if (!corners || corners.length !== 4) return;
-
-      const col = accent;
-
-      ctx.save();
-
-      ctx.beginPath();
-      ctx.moveTo(corners[0].x, corners[0].y);
-      for (let i = 1; i < 4; i++) ctx.lineTo(corners[i].x, corners[i].y);
-      ctx.closePath();
-
-      ctx.shadowColor = hexToRgba(col, 0.7);
-      ctx.shadowBlur = 20;
-      ctx.strokeStyle = hexToRgba(col, 0.95);
-      ctx.lineWidth = 3;
-      ctx.stroke();
-
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = hexToRgba("#ffffff", 0.85);
-      ctx.lineWidth = 1.3;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.moveTo(corners[0].x, corners[0].y);
-      for (let i = 1; i < 4; i++) ctx.lineTo(corners[i].x, corners[i].y);
-      ctx.closePath();
-      ctx.fillStyle = hexToRgba(col, 0.14);
-      ctx.fill();
-
-      ctx.clip();
-
-      const minY = Math.min(...corners.map(p => p.y));
-      const maxY = Math.max(...corners.map(p => p.y));
-      const minX = Math.min(...corners.map(p => p.x));
-      const maxX = Math.max(...corners.map(p => p.x));
-      const w = maxX - minX;
-      const h = maxY - minY;
-
-      // Scanlines (always)
-      ctx.strokeStyle = hexToRgba(col, 0.2);
-      ctx.lineWidth = 1;
-      for (let y = minY; y < maxY; y += 7) {
-        ctx.beginPath();
-        ctx.moveTo(minX - 20, y);
-        ctx.lineTo(maxX + 20, y);
-        ctx.stroke();
-      }
-
-      // Moving highlight
-      const range = Math.max(30, h);
-      const t = (performance.now() / 28) % (range + 40);
-      ctx.strokeStyle = hexToRgba(col, 0.42);
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.moveTo(minX - 20, minY + t);
-      ctx.lineTo(maxX + 20, minY + t);
-      ctx.stroke();
-
-      // ===== TV Static / Glitch Effect =====
-      if (glitchOn) {
-        // Noise dots
-        const density = Math.floor((w * h) / 900);
-        for (let i = 0; i < density; i++) {
-          const nx = minX + Math.random() * w;
-          const ny = minY + Math.random() * h;
-          const bright = Math.random();
-          ctx.fillStyle = `rgba(${bright > 0.5 ? 255 : 0},${bright > 0.5 ? 255 : 0},${bright > 0.5 ? 255 : 0},${0.15 + Math.random() * 0.35})`;
-          ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
-        }
-
-        // Horizontal tear / static bands
-        if (Math.random() > 0.55) {
-          const bandY = minY + Math.random() * h;
-          const bandH = 2 + Math.random() * 8;
-          ctx.fillStyle = `rgba(255,255,255,${0.08 + Math.random() * 0.12})`;
-          ctx.fillRect(minX, bandY, w, bandH);
-        }
-
-        // RGB shift lines
-        if (Math.random() > 0.7) {
-          const gy = minY + Math.random() * h;
-          ctx.strokeStyle = "rgba(255,40,40,0.35)";
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.moveTo(minX, gy);
-          ctx.lineTo(maxX, gy + (Math.random() - 0.5) * 4);
-          ctx.stroke();
-
-          ctx.strokeStyle = "rgba(40,255,120,0.3)";
-          ctx.beginPath();
-          ctx.moveTo(minX, gy + 2);
-          ctx.lineTo(maxX, gy + 2 + (Math.random() - 0.5) * 4);
-          ctx.stroke();
-        }
-
-        // Occasional vertical glitch slice
-        if (Math.random() > 0.85) {
-          const gx = minX + Math.random() * w;
-          ctx.fillStyle = "rgba(0,0,0,0.25)";
-          ctx.fillRect(gx, minY, 3 + Math.random() * 6, h);
-        }
-      }
-
-      ctx.restore();
-
-      // Label
-      const labelX = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4;
-      const labelY = Math.min(...corners.map(p => p.y)) - 20;
-
-      ctx.font = "700 14px 'Segoe UI', system-ui, sans-serif";
-      ctx.fillStyle = hexToRgba(col, 0.98);
-      ctx.textAlign = "center";
-      ctx.shadowColor = "rgba(0,0,0,0.9)";
-      ctx.shadowBlur = 5;
-      ctx.fillText("CYBER FRAME // ACTIVE", labelX, labelY);
-      ctx.shadowBlur = 0;
-
-      // Corner dots
-      ctx.fillStyle = col;
-      corners.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 4.2, 0, Math.PI * 2);
-        ctx.fill();
-      });
+      if (hands.length === 0) statusEl.textContent = "No hands detected";
+      else if (hands.length === 1) statusEl.textContent = "Show both hands";
+      else statusEl.textContent = "Form a box with index + thumb";
     }
 
     init();
