@@ -44,7 +44,6 @@
       pointer-events: none;
     }
 
-    /* ===== Minimal clean controls ===== */
     .bar {
       position: absolute;
       z-index: 30;
@@ -107,19 +106,6 @@
       border-radius: 6px;
     }
 
-    .btn {
-      font: 600 11px system-ui, sans-serif;
-      letter-spacing: 0.3px;
-      color: rgba(255,255,255,0.65);
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      padding: 4px 2px;
-      transition: color 0.15s;
-    }
-    .btn:hover { color: #fff; }
-    .btn.on { color: #ff5c5c; }
-
     .dot {
       width: 6px;
       height: 6px;
@@ -166,12 +152,11 @@
     <div class="bar top-left">
       <label>Color</label>
       <input type="color" id="colorPicker" value="#00e5ff" />
-      <button class="btn" id="glitchBtn" type="button">Glitch Off</button>
     </div>
 
     <div class="bar top-right">
       <div class="dot" id="liveDot"></div>
-      <span id="nodeLabel">Node 02</span>
+      <span>Node 02</span>
     </div>
 
     <div class="bar bottom" id="status">Form a box with index + thumb</div>
@@ -187,14 +172,12 @@
     const statusEl = document.getElementById("status");
     const loading = document.getElementById("loading");
     const colorPicker = document.getElementById("colorPicker");
-    const glitchBtn = document.getElementById("glitchBtn");
     const liveDot = document.getElementById("liveDot");
 
     let handLandmarker = null;
     let lastVideoTime = -1;
     let running = false;
-    let glitchOn = false;
-    let accent = [0, 0.9, 1]; // rgb 0-1
+    let accent = [0, 0.9, 1];
 
     colorPicker.addEventListener("input", (e) => {
       const h = e.target.value;
@@ -207,20 +190,12 @@
       document.documentElement.style.setProperty("--accent", h);
     });
 
-    glitchBtn.addEventListener("click", () => {
-      glitchOn = !glitchOn;
-      glitchBtn.classList.toggle("on", glitchOn);
-      glitchBtn.textContent = glitchOn ? "Glitch On" : "Glitch Off";
-    });
-
-    // Tracking — no grace period (instant hide)
     let smooth = null;
     const TIP = { THUMB: 4, INDEX: 8 };
     const PIP = { INDEX: 6 };
     const BASE = 0.6;
     const FAST = 0.85;
 
-    // ===== WebGL setup =====
     const gl = glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false, antialias: true });
     if (!gl) alert("WebGL not supported");
 
@@ -239,50 +214,23 @@
       varying vec2 v_uv;
       uniform vec3 u_color;
       uniform float u_time;
-      uniform float u_glitch;
-
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-      }
 
       void main() {
         vec2 uv = v_uv;
 
-        // Base tint
         vec3 col = u_color * 0.22;
 
-        // Scanlines
         float scan = 0.55 + 0.45 * sin(uv.y * 220.0 + u_time * 2.0);
         col *= scan;
 
-        // Moving beam
         float beam = smoothstep(0.02, 0.0, abs(fract(uv.y * 0.8 - u_time * 0.15) - 0.5) - 0.48);
         col += u_color * beam * 0.35;
 
-        // Soft vignette toward edges of quad
         float edge = smoothstep(0.0, 0.08, uv.x) * smoothstep(1.0, 0.92, uv.x)
                    * smoothstep(0.0, 0.08, uv.y) * smoothstep(1.0, 0.92, uv.y);
         col *= 0.7 + 0.3 * edge;
 
-        // Glitch / TV static
-        if (u_glitch > 0.5) {
-          float n = hash(uv * 40.0 + floor(u_time * 24.0));
-          col += vec3(n) * 0.18;
-
-          // Horizontal tear
-          float tear = step(0.97, hash(vec2(floor(u_time * 10.0), floor(uv.y * 30.0))));
-          col += tear * 0.2;
-
-          // RGB split
-          float shift = (hash(vec2(u_time, 1.0)) - 0.5) * 0.03 * u_glitch;
-          col.r += hash(uv + vec2(shift, 0.0)) * 0.08;
-          col.b += hash(uv - vec2(shift, 0.0)) * 0.08;
-        }
-
-        // Alpha: stronger in center, soft
         float alpha = 0.55 * edge + 0.15;
-        if (u_glitch > 0.5) alpha += 0.08;
-
         gl_FragColor = vec4(col, alpha);
       }
     `;
@@ -307,20 +255,15 @@
     const aUv = gl.getAttribLocation(prog, "a_uv");
     const uColor = gl.getUniformLocation(prog, "u_color");
     const uTime = gl.getUniformLocation(prog, "u_time");
-    const uGlitch = gl.getUniformLocation(prog, "u_glitch");
 
     const buf = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buf);
 
-    // pos.x pos.y uv.x uv.y  (2 triangles)
     const verts = new Float32Array(24);
 
     function setQuad(corners, W, H) {
-      // corners ordered clockwise; map to clip space (-1..1)
-      // We use order: TL, TR, BR, BL approximately via sorted corners
       const toClip = (p) => [ (p.x / W) * 2 - 1, 1 - (p.y / H) * 2 ];
 
-      // Assign UVs by sorting into roughly TL TR BR BL
       const sorted = corners.slice().sort((a, b) => a.y - b.y);
       const top = sorted.slice(0, 2).sort((a, b) => a.x - b.x);
       const bot = sorted.slice(2, 4).sort((a, b) => a.x - b.x);
@@ -364,7 +307,6 @@
 
       gl.uniform3fv(uColor, accent);
       gl.uniform1f(uTime, performance.now() / 1000);
-      gl.uniform1f(uGlitch, glitchOn ? 1.0 : 0.0);
 
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
@@ -375,7 +317,6 @@
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
-    // ===== 2D border / label =====
     function drawBorder(corners) {
       const W = uiCanvas.width;
       const H = uiCanvas.height;
@@ -400,7 +341,6 @@
       ui.lineWidth = 1.1;
       ui.stroke();
 
-      // corners
       ui.fillStyle = col;
       corners.forEach(p => {
         ui.beginPath();
@@ -408,7 +348,6 @@
         ui.fill();
       });
 
-      // label
       const lx = (corners[0].x + corners[1].x + corners[2].x + corners[3].x) / 4;
       const ly = Math.min(...corners.map(p => p.y)) - 16;
       ui.font = "600 12px system-ui, sans-serif";
@@ -424,7 +363,6 @@
       ui.clearRect(0, 0, uiCanvas.width, uiCanvas.height);
     }
 
-    // ===== Tracking helpers =====
     function dist(a, b) {
       const dx = a.x - b.x, dy = a.y - b.y;
       return Math.sqrt(dx * dx + dy * dy);
@@ -449,7 +387,6 @@
       return t / 4;
     }
 
-    // ===== Main =====
     async function init() {
       try {
         const vision = await FilesetResolver.forVisionTasks(
@@ -565,7 +502,6 @@
         return;
       }
 
-      // Instant hide — no grace period
       smooth = null;
       clearGL();
       clearUI();
